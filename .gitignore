@@ -1,0 +1,10 @@
+.venv
+.env
+__pycache__
+prueba.html
+navbar.html
+probar.html
+base.html
+probar.py
+prueba.py
+venv
