@@ -27,7 +27,8 @@
       {% for i in data %}
       <div class="bordes" {% if i['value']==None %} style="background-color: rgb(255, 0, 0);" {% endif %}>
         <h6>{{i['name']}}</h6>
-        <input type="number" value="{{i['value']}}" disabled>
+        <input type="number" id={{i['name'].replace(' ','')}} disabled
+        value={{i[' value']}}>
       </div>
       {% endfor %}
     </div>
@@ -41,6 +42,7 @@
     {% endif %}
     <br>
   </div>
+  <script src="{{ url_for('js', path='/js/index.js') }}"></script>
 </body>
 
 </html>
