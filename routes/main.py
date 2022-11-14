@@ -234,7 +234,6 @@ async def main(request: Request):
 
 @web.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    print('entrada al ws')
     await manager.connect(websocket)
     try:
         while True:
