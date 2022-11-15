@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from fastapi import Request, WebSocket, WebSocketDisconnect
+from websockets.exceptions import ConnectionClosed
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi import APIRouter
@@ -10,162 +11,159 @@ c = ModbusClient(host="localhost", port=502, unit_id=1,
                  auto_open=False, auto_close=False)
 web = APIRouter()
 templates = Jinja2Templates(directory='templates')
-sola={'Grid side voltage L1-N':'Grid',
-'Grid side voltage L2-N':'Grid',
-'Grid side voltage L1-L2':'Grid',
-'Voltage at middle side of relay L1-L2':'Inverter',
-'Inverter output voltage L1-N':'Inverter',
-'Inverter output voltage L2-N':'Inverter',
-'Inverter output voltage L1-L2':'Inverter',
-'Load voltage L1':'Load',
-'Load voltage L2':'Load',
-'Empty Register':'',
-'Grid side current L1':'Grid',
-'Grid side current L2':'Grid',
-'Grid external Limiter current L1':'Grid',
-'Grid external Limiter current L2':'Grid',
-'Inverter output current L1':'Inverter',
-'Inverter output current L2':'Inverter',
-'Gen or AC Coupled power input':'Generator',
-'Grid side L1 power':'Grid',
-'Grid side L2 power':'Grid',
-'Total power of grid side L1-L2':'Grid',
-'Grid external Limter1 power':'Grid',
-'Grid external Limter2 power':'Grid',
-'Grid external Total Power':'Grid',
-'Inverter outputs L1 power':'Inverter',
-'Inverter outputs L2 power':'Inverter',
-'Inverter output Total power':'Inverter',
-'Load side L1 power':'Load',
-'Load side L2 power':'Load',
-'Load side Total power':'Load',
-'Load current L1':'Load',
-'Load current L2':'Load',
-'Gen Port Voltage':'Generator',
-'Battery temperature':'Battery',
-'Battery voltage':'Battery',
-'Battery capacity SOC':'Battery',
-'Empty Register':'',
-'PV1 input power':'PV',
-'PV2 input power':'PV',
-'Empty Register':'',
-'Empty Register':'',
-'Battery output power':'Battery',
-'Battery output current':'Battery',
-'Load frequency':'Load',
-'Inverter output frequency':'Inverter',
-'Grid side relay status':'Grid',
-'Generator side relay status':'Generator',
-'Generator relay Frequency':'Generator',
-'Empty Register':'',
-'Empty Register':'',
-'Empty Register':'',
-'Control Mode':'Configuration',
-'Equalization V':'Configuration',
-'Absorption V':'Configuration',
-'Float V':'Configuration',
-'Batt Capacity':'Configuration',
-'Batt Empty':'Configuration',
-'Zero Export Power':'Configuration',
-'Equalization day cycle':'Configuration',
-'Equalization time':'Configuration',
-'TEMPCO':'Configuration',
-'Max A Charge from PV or Grid':'Configuration',
-'Max A discharge from Batt':'Configuration',
-'Empty Register':'',
-'Battery operates according to voltage or SOC':'Configuration',
-'Lithium battery wake up sign bit Activate Batt':'Configuration',
-'Battery resistance value':'Configuration',
-'Battery charging efficiency':'Configuration',
-'Battery capacity Shut Down':'Configuration',
-'Battery capacity Restart':'Configuration',
-'Battery capacity Low Batt':'Configuration',
-'Battery voltage Shut Down':'Configuration',
-'Battery voltage Restart':'Configuration',
-'Battery voltage Low Batt':'Configuration',
-'Maximum operating time of generator':'Configuration',
-'Generator cooling time':'Configuration',
-'Generator charging Starting voltage point':'Configuration',
-'Generator charging starting capacity point':'Configuration',
-'Generator battery charging current':'Configuration',
-'Grid charging Start voltage point':'Configuration',
-'Grid charging start capacity point':'Configuration',
-'Grid battery charging current':'Configuration',
-'Generator charging enable':'Configuration',
-'Grid charging enable':'Configuration',
-'Solar Input as PSU':'Configuration',
-'Force Smart load ON':'Configuration',
-'Generator input is enabled as Smart load output':'Configuration',
-'Smart Load OFF batt Voltage':'Configuration',
-'Smart Load OFF batt':'Configuration',
-'Smart Load ON batt Voltage':'Configuration',
-'Smart Load ON batt':'Configuration',
-'Empty Register':'',
-'Minimum solar power required to start Smart load when connected to Grid':'Configuration',
-'Gen Grid Signal On':'Configuration',
-'Energy management model':'Configuration',
-'Empty Register':'',
-'Limit the maximum power output of the grid connection':'Configuration',
-'Empty Register':'',
-'Grid sell':'Configuration',
-'Time of Use Selling enabled':'Configuration',
-'Empty Register':'',
-'Sell mode time point 1':'Configuration',
-'Sell mode time point 2':'Configuration',
-'Sell mode time point 3':'Configuration',
-'Sell mode time point 4':'Configuration',
-'Sell mode time point5':'Configuration',
-'Sell mode time point6':'Configuration',
-'Sell mode time point 1 power':'Configuration',
-'Sell mode time point 2 power':'Configuration',
-'Sell mode time point 3 power':'Configuration',
-'Sell mode time point 4 power':'Configuration',
-'Sell mode time point 5 power':'Configuration',
-'Sell mode time point 6 power':'Configuration',
-'Sell mode time point 1 voltage':'Configuration',
-'Sell mode time point 2 voltage':'Configuration',
-'Sell mode time point 3 voltage':'Configuration',
-'Sell mode time point 4 voltage':'Configuration',
-'Sell mode time point 5 voltage':'Configuration',
-'Sell mode time point 6 voltage':'Configuration',
-'Point 1 capacity':'Configuration',
-'Point 2 capacity':'Configuration',
-'Point 3 capacity':'Configuration',
-'Point 4 capacity':'Configuration',
-'Point 5 capacity':'Configuration',
-'Point 6 capacity':'Configuration',
-'Time point 1 charge enable':'Configuration',
-'Time point 2 charge enable':'Configuration',
-'Time point 3 charge enable':'Configuration',
-'Time point 4 charge enable':'Configuration',
-'Time point 5 charge enable':'Configuration',
-'Time point 6 charge enable':'Configuration',
-'AC Coupled export to grid cutoff':'Configuration',
-'External CT sensor directional detection':'Configuration',
-'Restore connection time':'Configuration',
-'Solar Arc Fault Mode turned on':'Configuration',
-'Grid Mode':'Configuration',
-'Grid Frequency Setting':'Configuration',
-'Grid Type':'Configuration',
-'Grid Vol High':'Configuration',
-'Grid Vol Low':'Configuration',
-'Grid Hz High':'Configuration',
-'Grid Hz Low':'Configuration',
-'Generator connected to GRID input':'Configuration',
-'GEN peak shaving Power':'Configuration',
-'Grid Connect/Disconnect':'Configuration',
-'Parallel register 1':'Configuration'
-}
+sola = {30: 'Grid',
+        31: 'Grid',
+        32: 'Grid',
+        88: 'Inverter',
+        33: 'Inverter',
+        34: 'Inverter',
+        35: 'Inverter',
+        36: 'Load',
+        37: 'Load',
+        38: 'Grid',
+        39: 'Grid',
+        89: 'Grid',
+        90: 'Grid',
+        40: 'Inverter',
+        41: 'Inverter',
+        42: 'Generator',
+        43: 'Grid',
+        44: 'Grid',
+        45: 'Grid',
+        91: 'Grid',
+        92: 'Grid',
+        46: 'Grid',
+        47: 'Inverter',
+        48: 'Inverter',
+        49: 'Inverter',
+        50: 'Load',
+        51: 'Load',
+        52: 'Load',
+        53: 'Load',
+        54: 'Load',
+        55: 'Generator',
+        56: 'Battery',
+        57: 'Battery',
+        58: 'Battery',
+        59: 'PV',
+        60: 'PV',
+        61: 'Battery',
+        62: 'Battery',
+        63: 'Load',
+        64: 'Inverter',
+        65: 'Grid',
+        93: 'Generator',
+        66: 'Generator',
+        94: 'Configuration',
+        95: 'Configuration',
+        96: 'Configuration',
+        97: 'Configuration',
+        98: 'Configuration',
+        99: 'Configuration',
+        100: 'Configuration',
+        101: 'Configuration',
+        102: 'Configuration',
+        103: 'Configuration',
+        104: 'Configuration',
+        105: 'Configuration',
+        107: 'Configuration',
+        108: 'Configuration',
+        109: 'Configuration',
+        110: 'Configuration',
+        111: 'Configuration',
+        112: 'Configuration',
+        113: 'Configuration',
+        114: 'Configuration',
+        115: 'Configuration',
+        116: 'Configuration',
+        117: 'Configuration',
+        118: 'Configuration',
+        119: 'Configuration',
+        120: 'Configuration',
+        121: 'Configuration',
+        122: 'Configuration',
+        123: 'Configuration',
+        124: 'Configuration',
+        125: 'Configuration',
+        126: 'Configuration',
+        127: 'Configuration',
+        128: 'Configuration',
+        129: 'Configuration',
+        130: 'Configuration',
+        131: 'Configuration',
+        132: 'Configuration',
+        133: 'Configuration',
+        135: 'Configuration',
+        136: 'Configuration',
+        29: 'Configuration',
+        0: 'Configuration',
+        137: 'Configuration',
+        1: 'Configuration',
+        2: 'Configuration',
+        3: 'Configuration',
+        4: 'Configuration',
+        8: 'Configuration',
+        12: 'Configuration',
+        16: 'Configuration',
+        20: 'Configuration',
+        24: 'Configuration',
+        5: 'Configuration',
+        9: 'Configuration',
+        13: 'Configuration',
+        17: 'Configuration',
+        21: 'Configuration',
+        25: 'Configuration',
+        139: 'Configuration',
+        140: 'Configuration',
+        141: 'Configuration',
+        142: 'Configuration',
+        143: 'Configuration',
+        144: 'Configuration',
+        6: 'Configuration',
+        10: 'Configuration',
+        14: 'Configuration',
+        18: 'Configuration',
+        22: 'Configuration',
+        26: 'Configuration',
+        7: 'Configuration',
+        11: 'Configuration',
+        15: 'Configuration',
+        19: 'Configuration',
+        23: 'Configuration',
+        27: 'Configuration',
+        145: 'Configuration',
+        146: 'Configuration',
+        147: 'Configuration',
+        148: 'Configuration',
+        149: 'Configuration',
+        150: 'Configuration',
+        151: 'Configuration',
+        152: 'Configuration',
+        153: 'Configuration',
+        154: 'Configuration',
+        155: 'Configuration',
+        156: 'Configuration',
+        157: 'Configuration',
+        158: 'Configuration',
+        28: 'Configuration',
+        159: 'Configuration',
+        106: 'Empty',
+        134: 'Empty',
+        138: 'Empty',
+        }
+
 
 class ModelSettings(BaseModel):
     dataframe: Dict
-    
+
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
+        print('Entrada')
         self.active_connections.append(websocket)
 
     def disconnect(self, websocket: WebSocket):
@@ -178,65 +176,90 @@ class ConnectionManager:
         for connection in self.active_connections:
             await connection.send_json(message)
 
+
 manager = ConnectionManager()
+
+
 def updateRegisters():
     with open('settings_clinet.yml', 'r') as file:
         pr = safe_load(file)
-    listAddress=[]
-    dicc={}
+    listAddress = []
+    dicc = {}
     for i in pr['data']:
-        dicc[i['name']]=i['register'] 
+        dicc[i['name']] = i['register']
     for i in pr['data']:
         listAddress.append(i['register'])
     listAddress.sort()
-    listOut=[]
-    listOut1=[]
-    i=0
-    a=1
+    listOut = []
+    listOut1 = []
+    i = 0
+    a = 0
     while True:
-        if listAddress[i]==a:
+        if listAddress[i] == a:
             listOut.append(listAddress[i])
-            i+=1
-            a+=1
+            i += 1
+            a += 1
         else:
             listOut1.append(listOut.copy())
             listOut.clear()
-            a=listAddress[i]    
-        if i==len(listAddress):
+            a = listAddress[i]
+        if i == len(listAddress):
             listOut1.append(listOut.copy())
             break
-    regs={}
-    a=0
+    regs = {}
+    a = 0
     if c.open():
         for i in listOut1:
-            modbusList=c.read_holding_registers(i[0],len(i))
+            modbusList = c.read_holding_registers(i[0], len(i))
             for e in modbusList:
-                regs[listAddress[a]]=e
-                a+=1
+                regs[listAddress[a]] = e
+                a += 1
         c.close()
     else:
         pr['data'] = ''
     try:
         for i in pr['data']:
             i['value'] = regs[i['register']]
-            i['category'] = i['name']
+            i['category'] = sola[i['register']]
+    #list.sort(key=lambda x: x['category'])
     except:
-            i['value'] = None
+        i['value'] = None
     return pr['data']
+
 
 @web.get('/', response_class=HTMLResponse)
 async def main(request: Request):
-    #dataRegisters=updateRegisters()
+    # try:
+    # manager.disconnect(manager.active_connections[0])
+    # except:
+    #     print('error')
+    #     pass
+    # dataRegisters=updateRegisters()
     with open('settings_clinet.yml', 'r') as file:
         pr = safe_load(file)
-    context = {'request': request, 'data': pr['data']}
+    listRegisters = pr['data']
+    for i in listRegisters:
+        i['category'] = sola[i['register']]
+    #newlist = [x['name'] for x in listRegisters if True]
+    listRegisters.sort(key=lambda x: x['category'])
+    data = []
+    newCat = [x['category'] for x in listRegisters if True]
+    newlist = sorted(set(newCat))
+    for i in newlist:
+        data.append([x for x in listRegisters if x['category'] in i])
+    context = {'request': request, 'data': data}
     return templates.TemplateResponse('index.html', context=context)
 
-@web.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+
+@web.websocket("/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: int):
     await manager.connect(websocket)
-    try:
-        while True:
+    while websocket.client_state.CONNECTED:
+        try:
             await manager.broadcast(updateRegisters())
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        except (WebSocketDisconnect, ConnectionClosed):
+            await manager.disconnect(websocket)
+            break
+        except Exception as e:
+            print(e)
+            break

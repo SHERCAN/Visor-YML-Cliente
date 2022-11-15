@@ -17,7 +17,7 @@
 <body>
   <div id="fondo">
     <div class="first tittle">
-      <h1>View YAML </h1>
+      <h1>View</h1>
     </div>
     <div class="tittle first">
       <h3>Registers</h3>
@@ -25,10 +25,15 @@
     {% if data != '' %}
     <div class="grilla">
       {% for i in data %}
-      <div class="bordes" {% if i['value']==None %} style="background-color: rgb(255, 0, 0);" {% endif %}>
-        <h6>{{i['name']}}</h6>
-        <input type="number" id={{i['name'].replace(' ','')}} disabled
-        value={{i[' value']}}>
+      <div class="grilla">
+        <h4>{{i[0]['category']}}</h4>
+        {% for j in i %}
+        <div class="bordes" {% if j['value']==None %} style="background-color: rgb(255, 0, 0);" {% endif %}>
+          <h6>{{j['name']}}</h6>
+          <input type="number" id={{j['name'].replace(' ','')}} disabled
+        value={{j[' value']}}>
+        </div>
+        {% endfor %}
       </div>
       {% endfor %}
     </div>
