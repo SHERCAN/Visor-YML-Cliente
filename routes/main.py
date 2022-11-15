@@ -163,7 +163,6 @@ class ConnectionManager:
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
-        print('Entrada')
         self.active_connections.append(websocket)
 
     def disconnect(self, websocket: WebSocket):
@@ -221,7 +220,6 @@ def updateRegisters():
         for i in pr['data']:
             i['value'] = regs[i['register']]
             i['category'] = sola[i['register']]
-    #list.sort(key=lambda x: x['category'])
     except:
         i['value'] = None
     return pr['data']
@@ -240,7 +238,6 @@ async def main(request: Request):
     listRegisters = pr['data']
     for i in listRegisters:
         i['category'] = sola[i['register']]
-    #newlist = [x['name'] for x in listRegisters if True]
     listRegisters.sort(key=lambda x: x['category'])
     data = []
     newCat = [x['category'] for x in listRegisters if True]
