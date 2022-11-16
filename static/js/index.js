@@ -1,6 +1,5 @@
 var clientID = Date.now();
-var ws = new WebSocket(`ws://localhost:8000/ws/${clientID}`);
-
+var ws = new WebSocket("ws://" + window.location.host + "/ws/" +clientID);
 function processMessage(event) {
   var jsonObj = JSON.parse(event.data);
   jsonObj.forEach((key) => {

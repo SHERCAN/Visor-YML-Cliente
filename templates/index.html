@@ -21,20 +21,23 @@
     </div>
     <div class="tittle first">
       <h3>Registers</h3>
+      <br>
     </div>
     {% if data != '' %}
-    <div class="grilla">
+    <div class="grilla1">
       {% for i in data %}
       <div class="grilla">
         <h4>{{i[0]['category']}}</h4>
         {% for j in i %}
         <div class="bordes" {% if j['value']==None %} style="background-color: rgb(255, 0, 0);" {% endif %}>
           <h6>{{j['name']}}</h6>
-          <input type="number" id={{j['name'].replace(' ','')}} disabled
-        value={{j[' value']}}>
+          <input class="inputs" type="number" id={{j['name'].replace(' ','')}} disabled 
+          value={{j['value']}}><span>{{j['unit']}}</span>
         </div>
         {% endfor %}
+
       </div>
+      <br>
       {% endfor %}
     </div>
     {% else %}

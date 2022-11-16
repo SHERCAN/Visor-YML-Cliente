@@ -233,27 +233,36 @@ async def main(request: Request):
     #     print('error')
     #     pass
     # dataRegisters=updateRegisters()
-    with open('settings_clinet.yml', 'r') as file:
-        pr = safe_load(file)
+    with open('settings_clinet.yml', 'r',  encoding='utf8') as file:
+        pr = safe_load(file,)
     listRegisters = pr['data']
+    print(listRegisters)
     for i in listRegisters:
         i['category'] = sola[i['register']]
     listRegisters.sort(key=lambda x: x['category'])
     data = []
+    
     newCat = [x['category'] for x in listRegisters if True]
     newlist = sorted(set(newCat))
     for i in newlist:
         data.append([x for x in listRegisters if x['category'] in i])
     context = {'request': request, 'data': data}
     return templates.TemplateResponse('index.html', context=context)
+cuenta=0
+def sumatoria():
+    global cuenta
+    cuenta+=1
+    return {'cuenta':cuenta}
 
 
+# @web.websocket_route("/ws/{client_id}")
 @web.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: int):
     await manager.connect(websocket)
     while websocket.client_state.CONNECTED:
         try:
             await manager.broadcast(updateRegisters())
+            # await manager.broadcast(sumatoria())
         except (WebSocketDisconnect, ConnectionClosed):
             await manager.disconnect(websocket)
             break
