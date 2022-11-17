@@ -17,7 +17,7 @@ app.mount("/static", StaticFiles(directory="static"), name="js")
 
 if __name__ == '__main__':
     if mode == 'TEST':
-        uvicorn.run('app:app', log_level='trace', access_log=True, reload=True)
+        uvicorn.run('app:app',  reload=True)# log_level='trace', access_log=True,
     else:
         uvicorn.run(app='app:app', host='0.0.0.0', port=81,
                     log_level='info', access_log=False)
