@@ -1,4 +1,4 @@
-from datetime import datetime
+from json import loads
 from threading import Thread
 from time import sleep
 from pydantic import BaseModel
@@ -10,6 +10,7 @@ from fastapi import APIRouter
 from pyModbusTCP.client import ModbusClient
 from typing import Dict, List
 from yaml import safe_load
+import asyncio
 
 web = APIRouter()
 templates = Jinja2Templates(directory='templates')
@@ -155,10 +156,6 @@ sola = {30: 'Grid',
         }
 
 
-class ModelSettings(BaseModel):
-    dataframe: Dict
-
-
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
@@ -177,34 +174,54 @@ class ConnectionManager:
         for connection in self.active_connections:
             await connection.send_json(message)
 
+    async def receive(self):
+        try:
+            for connection in self.active_connections:
+                mm = loads(await connection.receive_text())
+                registros = classRegisters.outRegisters.copy()
+                try:
+                    sal = [register['register']
+                           for register in registros if mm['name'] == register['name']]
+                    classRegisters.regsOut.update(
+                        {'register': sal[0], 'value': mm['value']})
+                except Exception as e:
+                    print(e, 'ent')
+        except:
+            pass
+
 
 manager = ConnectionManager()
 
 
 class RegisterManager():
     def __init__(self):
+        with open('settings_clinet.yml', 'r',  encoding='utf8') as file:
+            self.pr = safe_load(file)
+        self.modbusClient = ModbusClient(
+            host=self.pr['server']['host'], port=self.pr['server']['port'], auto_open=False, auto_close=False)
+        print(self.pr['server'])
         self.listAddress = []
         self.dicc = {}
         self.listOut = []
         self.listOut1 = []
         self.outRegisters = []
         self.regs = {}
-        self.modbusClient = ModbusClient(host="localhost", port=502, unit_id=1,
-                                         auto_open=False, auto_close=False)
+        self.regsOut = {}
+        self.regWrite = None
 
     def updateRegisters(self):
-        with open('settings_clinet.yml', 'r') as file:
-            pr = safe_load(file)
-
-        for i in pr['data']:
-            self.dicc[i['name']] = i['name'].replace(' ', '')
-            self.dicc['value'] = 0
-            self.dicc[i['register']] = i['register']
-            self.dicc[i['scale']] = i['scale']
-            self.outRegisters.append({'name': self.dicc[i['name']],
-                                      'value': self.dicc['value'],
-                                      'register': self.dicc[i['register']],
-                                      'scale': self.dicc[i['scale']]})
+        for i in self.pr['data']:
+            self.dicc['write_type'] = i['write_type'] if i.get(
+                'write_type') != None else None
+            self.dicc['write_range'] = i['write_range'] if i.get(
+                'write_range') != None else None
+            self.outRegisters.append({'name': i['name'].replace(' ', ''),
+                                      'value': 0,
+                                      'register': i['register'],
+                                      'scale': i['scale'],
+                                      'write': i['write'],
+                                      'write_type': self.dicc['write_type'],
+                                      'write_range': self.dicc['write_range']})
             self.listAddress.append(i['register'])
         self.listAddress.sort()
         i = 0
@@ -223,7 +240,6 @@ class RegisterManager():
                 break
 
     def __callme(self):
-
         while True:
             sleep(0.1)
             a = 0
@@ -231,14 +247,25 @@ class RegisterManager():
                 for i in self.listOut1:
                     modbusList = self.modbusClient.read_holding_registers(
                         i[0], len(i))
-                    try:
-                        for e in modbusList:
-                            self.regs[self.listAddress[a]] = e
-                            a += 1
-                    except Exception as e:
-                        print(e)
+                    if modbusList != None:
+                        try:
+                            for e in modbusList:
+                                self.regs[self.listAddress[a]] = e
+                                a += 1
+                        except Exception as e:
+                            print(e, 'ant')
+                    else:
+                        break
+                try:
+                    if self.regsOut != self.regWrite and len(self.regsOut.keys()) > 0:
+                        self.regWrite = self.regsOut.copy()
+                        self.modbusClient.write_single_register(
+                            self.regsOut['register'], int(self.regsOut['value']))
+                except:
+                    pass
                 for i in self.outRegisters:
-                    i['value'] = round(self.regs[i['register']]*i['scale'], 1)
+                    i['value'] = round(
+                        self.regs[i['register']]*i['scale'], 1)
             else:
                 break
 
@@ -247,15 +274,30 @@ class RegisterManager():
         t.start()
 
 
+class Listener:
+    def __init__(self, listReg: RegisterManager, polling_interval: float = 0.2) -> None:
+        self.listReg = listReg
+        self.polling_interval = polling_interval
+
+    async def listen(self):
+        loop = asyncio.get_running_loop()
+        while True:
+            asyncio.run_coroutine_threadsafe(manager.receive(), loop)
+            lines = await loop.run_in_executor(None, self.poll)
+            yield lines
+            await asyncio.sleep(self.polling_interval)
+
+    def poll(self):
+        return self.listReg.outRegisters
+
+
 classRegisters = RegisterManager()
 classRegisters.updateRegisters()
 
 
 @web.get('/', response_class=HTMLResponse)
 async def main(request: Request):
-    with open('settings_clinet.yml', 'r',  encoding='utf8') as file:
-        pr = safe_load(file,)
-    listRegisters = pr['data']
+    listRegisters = classRegisters.pr['data']
     for i in listRegisters:
         i['category'] = sola[i['register']]
     listRegisters.sort(key=lambda x: x['category'])
@@ -268,22 +310,24 @@ async def main(request: Request):
     return templates.TemplateResponse('index.html', context=context)
 
 
-@web.websocket("/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: int):
+@web.websocket("/ws/")
+async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     if not classRegisters.modbusClient.is_open:
         while not classRegisters.modbusClient.open():
             pass
         classRegisters.sendRegisters()
-    while True:
-        try:
-            await manager.broadcast(classRegisters.outRegisters)
-            sleep(0.05)
-        except (WebSocketDisconnect, ConnectionClosed):
-            manager.disconnect(websocket)
-            classRegisters.modbusClient.close()
-            break
-        except Exception as e:
-            print(e)
-            classRegisters.modbusClient.close()
-            break
+    listener = Listener(classRegisters)
+    try:
+        sleep(0.5)
+        async for message in listener.listen():
+            await manager.broadcast(message)
+
+    except (WebSocketDisconnect, ConnectionClosed):
+        print('desc')
+        manager.disconnect(websocket)
+        classRegisters.modbusClient.close()
+    except Exception as e:
+        manager.disconnect(websocket)
+        print(e, 'sal')
+        pass

@@ -7,7 +7,8 @@
   margin-left: 0.5rem;
   display: grid;
   gap: 0.5rem;
-  grid-auto-rows: max-content;
+  grid-auto-rows: min-content;
+  grid-auto-columns: min-content;
   background-color: var(--main-bg-color);
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
   border-color: darkgray;
@@ -22,7 +23,7 @@
   margin-left: 0.5rem;
   display: grid;
   gap: 0.5rem;
-  grid-auto-rows: max-content;
+  grid-auto-rows: auto;
   background-color: var(--main-bg-color);
   grid-template-rows: repeat(auto-fill, minmax(15rem, 1fr));
 }
@@ -31,7 +32,7 @@
   grid-column: span 2;
 }
 .first {
-  display: flex;
+  display: inline;
   align-items: center;
   justify-content: center;
   flex-direction: column;
@@ -52,45 +53,79 @@ html,
 }
 
 .bordes {
-  border-color: rgb(18, 18, 18);
+  display: inline-table;
+  border-color: rgb(255, 255, 255);
   border-width: 2px;
   border-style: solid;
-  padding: 6px;
+  padding: 4px;
   background-color: rgba(255, 255, 255, 0.726);
   border-radius: 10px;
 }
-input{
-  display: inline-block;
-  width: 6.5em;
-  margin-top: 10px;
+input {
+  display: inline;
+  width: 6.8em;
   height: 32px;
   background-color: rgb(0, 0, 0);
-  color:rgb(5, 253, 67);
-  font-weight: bold;  
+  color: rgb(5, 253, 67);
+  font-weight: bold;
   border-radius: 5px;
-  padding-right:50px; 
-  text-align:right;
+  padding-right: 3rem;
+  text-align: right;
 }
-span{
-  display:inline-block;
+span {
+  display: inline;
   height: 32px;
   background-color: rgba(0, 0, 0, 0);
-  color:rgb(5, 253, 67);
-  font-weight: bold;  
+  color: rgb(5, 253, 67);
+  font-weight: bold;
   border-radius: 5px;
-  margin-top:-20px;
-  margin-left:-50px;
+  margin-top: -20px;
+  margin-left: -50px;
 }
 
 h4 {
-  font-weight: normal;  
+  font-weight: normal;
   font-weight: 400;
   font-size: 1.5rem;
   line-height: auto;
   color: #e9e0e0;
 }
-h6{
+h6 {
   font-weight: bold;
   color: #000000;
   font-size: 1.2rem;
+}
+img {
+  display: inline;
+  width: 1.8rem;
+  background-color: rgb(136, 142, 218);
+  text-align: center;
+  border-radius: 50%;
+}
+button {
+  display: inline;
+  border-color: rgba(0, 0, 0, 0);
+  background-color: #47718b00;
+  height: 1.9rem;
+  width: 1.9rem;
+  transform: translateY(-4px);
+}
+.inputvalue {
+  display: inline;
+  margin-left: 1.5rem;
+  height: 32px;
+  background-color: rgb(0, 0, 0);
+  color: rgb(5, 253, 67);
+  font-weight: bold;
+  border-radius: 5px;
+}
+button:active {
+  background-color: #3e8e4100;
+  box-shadow: 0 5px rgba(102, 102, 102, 0);
+  transform: translateY(-6px);
+}
+
+button:hover {
+  background-color: #3e8e4100;
+  box-shadow: 0 5px rgba(230, 226, 226, 0.658);
 }
