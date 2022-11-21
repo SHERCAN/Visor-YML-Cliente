@@ -1,3 +1,5 @@
+from datetime import datetime
+from requests import post, get
 from json import loads
 from threading import Thread
 from time import sleep
@@ -11,6 +13,7 @@ from pyModbusTCP.client import ModbusClient
 from typing import Dict, List
 from yaml import safe_load
 import asyncio
+from pyModbusTCP.utils import get_2comp
 
 web = APIRouter()
 templates = Jinja2Templates(directory='templates')
@@ -199,7 +202,9 @@ class RegisterManager():
             self.pr = safe_load(file)
         self.modbusClient = ModbusClient(
             host=self.pr['server']['host'], port=self.pr['server']['port'], auto_open=False, auto_close=False)
-        print(self.pr['server'])
+        self.path = '/addData'
+        # self.url = 'http://127.0.0.1:5000'+self.path
+        self.url = 'http://141.147.133.37'+self.path
         self.listAddress = []
         self.dicc = {}
         self.listOut = []
@@ -240,6 +245,7 @@ class RegisterManager():
                 break
 
     def __callme(self):
+        control1 = datetime().now()
         while True:
             sleep(0.1)
             a = 0
@@ -247,11 +253,20 @@ class RegisterManager():
                 for i in self.listOut1:
                     modbusList = self.modbusClient.read_holding_registers(
                         i[0], len(i))
+                    sleep(0.01)
+                    control1 += 1
                     if modbusList != None:
                         try:
                             for e in modbusList:
-                                self.regs[self.listAddress[a]] = e
+                                self.regs[self.listAddress[a]
+                                          ] = get_2comp(e, 16)
                                 a += 1
+                            if control1 > 15:
+                                try:
+                                    post(self.url, json=self.regs)
+                                except:
+                                    pass
+                                control1 = 0
                         except Exception as e:
                             print(e, 'ant')
                     else:
@@ -306,7 +321,12 @@ async def main(request: Request):
     newlist = sorted(set(newCat))
     for i in newlist:
         data.append([x for x in listRegisters if x['category'] in i])
-    context = {'request': request, 'data': data}
+    try:
+        get(classRegisters.url)
+        serverOn = True
+    except:
+        serverOn = False
+    context = {'request': request, 'data': data, 'server': serverOn}
     return templates.TemplateResponse('index.html', context=context)
 
 
