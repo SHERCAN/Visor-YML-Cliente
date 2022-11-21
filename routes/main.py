@@ -245,7 +245,7 @@ class RegisterManager():
                 break
 
     def __callme(self):
-        control1 = datetime().now()
+        control1 = 0
         while True:
             sleep(0.1)
             a = 0
