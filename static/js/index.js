@@ -69,6 +69,18 @@ function sendValue(element) {
   ws.send(JSON.stringify(jsonObj));
 }
 // llamada a la pagina web
+
+// async function httpGet(elemento) {
+//   let theUrl = "http://141.147.133.37/get_registers";
+//   // let theUrl = "http://127.0.0.1:5000/get_registers";
+//   let response = await fetch(theUrl);
+//   await response.json().forEach((element) => {
+//     if (graphData.length < 20) {
+//       graphData.push(element[30]);
+//       newChart.data.datasets[0].data = graphData;
+//     }
+//   });
+// }
 function httpGet(register) {
   let theUrl = "http://141.147.133.37/get_registers";
   // let theUrl = "http://127.0.0.1:5000/get_registers";
