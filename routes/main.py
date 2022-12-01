@@ -14,6 +14,9 @@ from typing import Dict, List
 from yaml import safe_load
 import asyncio
 from pyModbusTCP.utils import get_2comp
+from dotenv import load_dotenv
+from os import getenv
+load_dotenv()
 
 web = APIRouter()
 templates = Jinja2Templates(directory='templates')
@@ -204,7 +207,7 @@ class RegisterManager():
             host=self.pr['server']['host'], port=self.pr['server']['port'], auto_open=False, auto_close=False)
         self.path = '/addData'
         # self.url = 'http://127.0.0.1:5000'+self.path
-        self.url = 'http://141.147.133.37'+self.path
+        self.url = 'http://141.147.133.37'
         self.listAddress = []
         self.dicc = {}
         self.listOut = []
@@ -263,7 +266,7 @@ class RegisterManager():
                                 a += 1
                             if control1 > 15:
                                 try:
-                                    post(self.url, json=self.regs)
+                                    post(self.url+self.path, json=self.regs)
                                 except:
                                     pass
                                 control1 = 0
@@ -312,6 +315,7 @@ classRegisters.updateRegisters()
 
 @web.get('/', response_class=HTMLResponse)
 async def main(request: Request):
+    get(classRegisters)
     listRegisters = classRegisters.pr['data']
     for i in listRegisters:
         i['category'] = sola[i['register']]
@@ -322,7 +326,7 @@ async def main(request: Request):
     for i in newlist:
         data.append([x for x in listRegisters if x['category'] in i])
     try:
-        get(classRegisters.url)
+        get(classRegisters.url+classRegisters.path)
         serverOn = True
     except:
         serverOn = False
