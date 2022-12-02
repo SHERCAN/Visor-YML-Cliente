@@ -208,6 +208,7 @@ class RegisterManager():
         self.path = '/addData'
         # self.url = 'http://127.0.0.1:5000'+self.path
         self.url = 'http://141.147.133.37'
+        # self.url = 'localhost:8000'
         self.listAddress = []
         self.dicc = {}
         self.listOut = []
@@ -248,7 +249,7 @@ class RegisterManager():
                 break
 
     def __callme(self):
-        control1 = 0
+        control1 = True
         while True:
             sleep(0.1)
             a = 0
@@ -257,19 +258,23 @@ class RegisterManager():
                     modbusList = self.modbusClient.read_holding_registers(
                         i[0], len(i))
                     sleep(0.01)
-                    control1 += 1
                     if modbusList != None:
                         try:
                             for e in modbusList:
                                 self.regs[self.listAddress[a]
                                           ] = get_2comp(e, 16)
                                 a += 1
-                            if control1 > 15:
+                            self.regs.update({'client': getenv('CLIENT')})
+                            if str(datetime.now().strftime("%S")) == str("00") and control1:
                                 try:
-                                    post(self.url+self.path, json=self.regs)
+                                    print('datos', self.regs)
+                                    post(self.url+self.path,
+                                         json=self.regs, timeout=2)
                                 except:
                                     pass
-                                control1 = 0
+                                control1 = False
+                            else:
+                                control1 = True
                         except Exception as e:
                             print(e, 'ant')
                     else:
@@ -315,8 +320,9 @@ classRegisters.updateRegisters()
 
 @web.get('/', response_class=HTMLResponse)
 async def main(request: Request):
-    get(classRegisters)
+    # get(classRegisters.url+'')
     listRegisters = classRegisters.pr['data']
+
     for i in listRegisters:
         i['category'] = sola[i['register']]
     listRegisters.sort(key=lambda x: x['category'])
@@ -326,7 +332,8 @@ async def main(request: Request):
     for i in newlist:
         data.append([x for x in listRegisters if x['category'] in i])
     try:
-        get(classRegisters.url+classRegisters.path)
+        # get(classRegisters.url+classRegisters.path, timeout=2)
+        # falta crear el metodo para este
         serverOn = True
     except:
         serverOn = False
