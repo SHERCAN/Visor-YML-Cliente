@@ -12,3 +12,6 @@ venv
 *.yaml
 index1.html
 *.txt
+build
+dist
+ap.spec
