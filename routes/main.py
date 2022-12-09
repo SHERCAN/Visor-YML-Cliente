@@ -1,4 +1,5 @@
 from datetime import datetime
+from fastapi.responses import JSONResponse
 from requests import post, get
 from json import loads
 from threading import Thread
@@ -16,9 +17,11 @@ import asyncio
 from pyModbusTCP.utils import get_2comp
 from dotenv import load_dotenv
 from os import getenv
+
 load_dotenv()
 
 web = APIRouter()
+
 templates = Jinja2Templates(directory='templates')
 sola = {30: 'Grid',
         31: 'Grid',
@@ -267,9 +270,8 @@ class RegisterManager():
                             self.regs.update({'client': getenv('CLIENT')})
                             if str(datetime.now().strftime("%S")) == str("00") and control1:
                                 try:
-                                    print('datos', self.regs)
-                                    post(self.url+self.path,
-                                         json=self.regs, timeout=2)
+                                    #post(self.url+self.path,json=self.regs, timeout=2)
+                                    pass
                                 except:
                                     pass
                                 control1 = False
@@ -362,3 +364,12 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
         print(e, 'sal')
         pass
+
+@web.get('/get_registers/{reg}', response_class=JSONResponse)
+async def main(reg: str):
+    cli =getenv('CLIENT')
+    print('Llego peticion')
+    # response=get(f"http://141.147.133.37/get_registers/{cli}/{reg}")
+    response=get(f"http://127.0.0.1:8000/get_register/{cli}/{reg}")
+    print(response)
+    return JSONResponse(content=response.json())

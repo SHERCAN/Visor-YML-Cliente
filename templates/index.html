@@ -38,7 +38,8 @@
         <div class="bordes" {% if j['value']==None %} style="background-color: rgb(255, 0, 0);" {% endif %}>
           <div class="graph-element">
             <h6>{{j['name']}}</h6>
-            <button id="btn-abrir-modal-{{j['name'].replace(' ','')}}" onclick="openModal(this)">Graph</button>
+            <button id="btn-abrir-modal-{{j['name'].replace(' ','')}}" onclick="openModal(this)"
+              name="{{j['name'].replace(' ','')}}">Graph</button>
           </div>
           <input class="inputs" type="number" id={{j['name'].replace(' ','')}} disabled 
           value={{j['value']}}><span>{{j['unit']}}</span>

@@ -3,7 +3,8 @@ var graphData = [];
 const modal = document.getElementById("modal");
 const btnCerrar = document.getElementById("btn-cerrar-modal");
 function openModal(element) {
-  httpGet(30);
+  console.log(element.name);
+  httpGet(element.name);
   // graphData = httpGet(30);
   modal.showModal();
 }
@@ -81,15 +82,16 @@ function sendValue(element) {
 //     }
 //   });
 // }
-function httpGet(register) {
-  let theUrl = "http://141.147.133.37/get_registers";
+function httpGet(registerName) {
+  let theUrl = "http://"+window.location.host+"/get_registers";
   // let theUrl = "http://127.0.0.1:5000/get_registers";
   var xmlHttp = new XMLHttpRequest();
-  xmlHttp.open("GET", theUrl, false); // false for synchronous request
+  xmlHttp.open("GET", theUrl+'/'+registerName, false); // false for synchronous request
   xmlHttp.send(null);
+  console.log(xmlHttp.responseText);
   JSON.parse(xmlHttp.responseText).forEach((element) => {
     if (graphData.length < 20) {
-      graphData.push(element[30]);
+      graphData.push(element['data']);
       newChart.data.datasets[0].data = graphData;
     }
   });
