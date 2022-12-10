@@ -1,11 +1,10 @@
 # -----------------------------------modules-----------------------------
 from fastapi import FastAPI
 from routes.main import web
-from config.var_env import mode
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 # -----------------------------------run---------------
-app = FastAPI(title='Configrator YAML',
+app = FastAPI(title='Configurator YAML',
               description='Configuration of the YAML file', version='0.0.1')
 # -----------------------------------cors---------------
 

@@ -57,7 +57,15 @@ async function processMessage(event) {
     }
   });
 }
+function closedWs(event) {
+  event.
+  
+  console.log("Connection closed");
+}
 ws.onmessage = processMessage;
+ws.onclose = function(event) {
+  alert("Connection closed")
+}
 
 function sendValue(element) {
   console.log("in" + element.name);

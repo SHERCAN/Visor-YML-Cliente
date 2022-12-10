@@ -173,8 +173,9 @@ class ConnectionManager:
         await websocket.accept()
         self.active_connections.append(websocket)
 
-    def disconnect(self, websocket: WebSocket):
+    async def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
+        await websocket.close()
 
     async def send_personal_message(self, message: str, websocket: WebSocket):
         await websocket.send_json(message)
@@ -252,7 +253,7 @@ class RegisterManager():
                 break
 
     def __callme(self):
-        control1 = True
+        # control1 = True
         while True:
             sleep(0.1)
             a = 0
@@ -268,15 +269,16 @@ class RegisterManager():
                                           ] = get_2comp(e, 16)
                                 a += 1
                             self.regs.update({'client': getenv('CLIENT')})
-                            if str(datetime.now().strftime("%S")) == str("00") and control1:
-                                try:
-                                    #post(self.url+self.path,json=self.regs, timeout=2)
-                                    pass
-                                except:
-                                    pass
-                                control1 = False
-                            else:
-                                control1 = True
+                            # if str(datetime.now().strftime("%S")) == str("00") and control1:
+                            try:
+                                #post(self.url+self.path,json=self.regs, timeout=2)
+                                print(self.regs)
+                                pass
+                            except:
+                                pass
+                            #     control1 = False
+                            # else:
+                            #     control1 = True
                         except Exception as e:
                             print(e, 'ant')
                     else:
@@ -324,7 +326,6 @@ classRegisters.updateRegisters()
 async def main(request: Request):
     # get(classRegisters.url+'')
     listRegisters = classRegisters.pr['data']
-
     for i in listRegisters:
         i['category'] = sola[i['register']]
     listRegisters.sort(key=lambda x: x['category'])
@@ -347,8 +348,11 @@ async def main(request: Request):
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     if not classRegisters.modbusClient.is_open:
-        while not classRegisters.modbusClient.open():
-            pass
+        for _ in range(2):
+            if not classRegisters.modbusClient.open():
+                sleep(1)
+        if not classRegisters.modbusClient.is_open:
+            await manager.disconnect(websocket)
         classRegisters.sendRegisters()
     listener = Listener(classRegisters)
     try:
@@ -358,10 +362,10 @@ async def websocket_endpoint(websocket: WebSocket):
 
     except (WebSocketDisconnect, ConnectionClosed):
         print('desc')
-        manager.disconnect(websocket)
+        await manager.disconnect(websocket)
         classRegisters.modbusClient.close()
     except Exception as e:
-        manager.disconnect(websocket)
+        await manager.disconnect(websocket)
         print(e, 'sal')
         pass
 
