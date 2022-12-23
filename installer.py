@@ -4,4 +4,5 @@ PyInstaller.__main__.run([
     '--hidden-import=app',
     '--add-data=static;static.',
     '--add-data=templates;templates.',
+    '--onefile',
     '-y'])
