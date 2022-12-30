@@ -87,7 +87,7 @@ class RegisterManager():
             self.listAddress.append(i['register'])
         self.listAddress.sort()
         i = 0
-        a = 0
+        a = self.listAddress[0]
         while True:
             if self.listAddress[i] == a:
                 self.listOut.append(self.listAddress[i])
@@ -117,11 +117,6 @@ class RegisterManager():
                                           ] = get_2comp(e, 16)
                                 a += 1
                             self.regs.update({'client': getenv('CLIENT')})
-                            try:
-                                # post(self.url+self.path,json=self.regs, timeout=2)
-                                pass
-                            except:
-                                pass
                         except Exception as e:
                             print(e, 'ant')
                     else:
@@ -136,6 +131,14 @@ class RegisterManager():
                 for i in self.outRegisters:
                     i['value'] = round(
                         self.regs[i['register']]*i['scale'], 1)
+                try:
+                    sendList=self.outRegisters.copy()
+                    sendList.append(getenv('CLIENT'))
+                    resul=post(self.url+self.path,json=self.outRegisters)
+                    # print(self.outRegisters)
+                    pass
+                except:
+                    pass
             else:
                 break
 
