@@ -1,11 +1,10 @@
 from pydantic import BaseModel
-from fastapi import Form
+from fastapi import Form,WebSocket
 from requests import post
 from json import loads
 from threading import Thread
 from time import sleep
-from pydantic import BaseModel
-from fastapi import WebSocket
+from models.wilApp import peakShaving
 from pyModbusTCP.client import ModbusClient
 from typing import List
 from yaml import safe_load
@@ -59,17 +58,15 @@ class RegisterManager():
         self.modbusClient = ModbusClient(
             host=self.pr['server']['host'], port=self.pr['server']['port'], auto_open=False, auto_close=False)
         self.path = '/addData'
-        # self.url = 'http://127.0.0.1:5000'+self.path
-        self.url = 'http://141.147.133.37'
-        # self.url = 'localhost:8000'
+        self.url =getenv('URL')
         self.listAddress = []
         self.dicc = {}
         self.listOut = []
         self.listOut1 = []
         self.outRegisters = []
         self.regs = {}
-        self.regsOut = {}
-        self.regWrite = None
+        self.regsOut = []
+        self.regWrite = []
 
     def updateRegisters(self):
         for i in self.pr['data']:
@@ -102,6 +99,7 @@ class RegisterManager():
                 break
 
     def __callme(self):
+        self.modbusClient.open()
         while True:
             sleep(0.1)
             a = 0
@@ -121,26 +119,33 @@ class RegisterManager():
                             print(e, 'ant')
                     else:
                         break
-                try:
-                    if self.regsOut != self.regWrite and len(self.regsOut.keys()) > 0:
-                        self.regWrite = self.regsOut.copy()
-                        self.modbusClient.write_single_register(
-                            self.regsOut['register'], int(self.regsOut['value']))
-                except:
-                    pass
+                self.regsOut=peakShaving.calculate([self.regs[22],self.regs[23]])
+                # try:
+                if self.regsOut != self.regWrite and len(self.regsOut) > 0:
+                    self.regWrite = self.regsOut.copy()
+                    for i in self.regWrite:
+                        if type(i['value']) != list:
+                            self.modbusClient.write_single_register(
+                                int(i['register']), int(i['value']))
+                        else:
+                            self.modbusClient.write_multiple_registers(
+                                int(i['register']), i['value'])
+                # except:
+                #     pass
                 for i in self.outRegisters:
                     i['value'] = round(
                         self.regs[i['register']]*i['scale'], 1)
                 try:
                     sendList=self.outRegisters.copy()
                     sendList.append(getenv('CLIENT'))
-                    resul=post(self.url+self.path,json=self.outRegisters)
-                    # print(self.outRegisters)
-                    pass
+                    resul=post(self.url+self.path,json=sendList)
+                    # resul=post('http://127.0.0.1:8000'+self.path,json=sendList)
+                    self.regsOut=resul.json()
                 except:
                     pass
             else:
-                break
+                sleep(5)
+                self.modbusClient.open()
 
     def sendRegisters(self):
         t = Thread(target=self.__callme)
@@ -165,6 +170,7 @@ class Listener:
 
 classRegisters = RegisterManager()
 classRegisters.updateRegisters()
+classRegisters.sendRegisters()
 
 manager = ConnectionManager()
 

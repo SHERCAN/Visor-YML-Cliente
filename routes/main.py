@@ -1,16 +1,12 @@
-from fastapi.responses import JSONResponse,HTMLResponse, RedirectResponse
+from fastapi.responses import JSONResponse,HTMLResponse
 from requests import get
 from time import sleep
-from fastapi import Request, WebSocket, WebSocketDisconnect
+from fastapi import Request, WebSocket, WebSocketDisconnect,APIRouter
 from websockets.exceptions import ConnectionClosed
 from fastapi.templating import Jinja2Templates
-from fastapi import APIRouter
 from dotenv import load_dotenv
 from models.dic import datosBase
-from models.model import manager
-from models.model import classRegisters
-from models.model import Listener
-from starlette.websockets import WebSocketState
+from models.model import manager,classRegisters,Listener
 from os import getenv
 load_dotenv()
 web = APIRouter()
@@ -29,7 +25,6 @@ async def main(request: Request):
         data.append([x for x in listRegisters if x['category'] in i])
     try:
         get(classRegisters.url+classRegisters.path, timeout=2)
-        # get('http://127.0.0.1:8000', timeout=2)
         serverOn = True
     except:
         serverOn = False
@@ -46,7 +41,6 @@ async def websocket_endpoint(websocket: WebSocket):
                 sleep(1)
         if not classRegisters.modbusClient.is_open:
             await manager.disconnect(websocket)
-        classRegisters.sendRegisters()
     listener = Listener(classRegisters)
     try:
         sleep(0.5)
@@ -62,7 +56,7 @@ async def websocket_endpoint(websocket: WebSocket):
         await manager.disconnect(websocket)
         print(e, 'sal')
         pass
-
+# Esto se cambiara por la base de datos local
 @web.get('/get_registers/{reg}', response_class=JSONResponse)
 async def main(reg: str):
     cli =getenv('CLIENT')
